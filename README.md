@@ -1,5 +1,6 @@
 # Buscatrabajo 🔍
 
+[![Tests](https://github.com/wpadillav/buscatrabajo/actions/workflows/tests.yml/badge.svg)](https://github.com/wpadillav/buscatrabajo/actions/workflows/tests.yml)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
 Agregador de ofertas de empleo **remoto** y **freelance** con interfaz web.
