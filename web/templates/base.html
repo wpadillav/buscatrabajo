@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Buscatrabajo{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a href="{{ url_for('index') }}">🔍 Buscatrabajo</a>
+        </div>
+        <div class="nav-links">
+            <a href="{{ url_for('index') }}">Ofertas</a>
+            <a href="{{ url_for('scrape_page') }}">Scraping</a>
+        </div>
+    </nav>
+    <div class="container">
+        {% block content %}{% endblock %}
+        <footer>
+            <p>Buscatrabajo - Agregador de ofertas remoto/freelance</p>
+        </footer>
+    </div>
+</body>
+</html>

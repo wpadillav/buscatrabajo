@@ -1,0 +1,103 @@
+# Configuración del buscador de empleo remoto/freelance
+# Perfil: William Padilla - SysAdmin & Security Engineer con enfoque junior en dev
+
+# Palabras que DEBEN aparecer en el título o descripción para considerar la oferta
+palabras_clave_obligatorias:
+  - remoto
+  - teletrabajo
+  - home office
+  - remota
+  - desde casa
+
+# Palabras que suman puntos de relevancia si aparecen (stack y roles objetivo)
+palabras_clave_positivas:
+  sysadmin: 10
+  administrador de sistemas: 10
+  soporte: 7
+  infraestructura: 9
+  devops: 9
+  sre: 9
+  linux: 8
+  seguridad: 8
+  hardening: 8
+  red: 6
+  redes: 6
+  servidor: 7
+  servidores: 7
+  aws: 7
+  cloud: 6
+  docker: 7
+  ansible: 7
+  python: 6
+  php: 5
+  bash: 5
+  nginx: 6
+  apache: 5
+  mysql: 5
+  mariadb: 5
+  freelance: 6
+  freelancer: 6
+  junior: 5
+  jr: 5
+  trainee: 5
+  entry level: 5
+  part-time: 4
+  medio tiempo: 4
+  horario flexible: 4
+
+# Palabras que restan puntos o descalifican (roles muy senior o fuera del perfil)
+palabras_clave_negativas:
+  senior: -10
+  sr: -10
+  lead: -10
+  architect: -10
+  arquitecto: -10
+  10 años: -10
+  8 años: -8
+  7 años: -7
+  5 años: -5
+  java: -3
+  .net: -3
+  angular: -2
+  react: -2
+
+# Umbral mínimo de puntos para considerar una oferta relevante
+umbral_relevancia: 8
+
+# Términos de búsqueda por portal
+busquedas:
+  elempleo:
+    - remoto sistemas
+    - teletrabajo soporte TI
+    - remoto administrador servidores
+    - remoto seguridad informática
+    - freelance infraestructura TI
+  infojobs:
+    - remoto sysadmin
+    - teletrabajo soporte tecnico
+    - remoto infraestructura
+    - freelance tecnologia
+
+# Configuración de requests
+requests:
+  delay_entre_paginas_segundos: 2
+  timeout_segundos: 15
+  max_intentos: 3
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+
+# Notificaciones (opcional)
+# Para Telegram:
+#   1. Crea un bot con @BotFather y copia el token que te da.
+#   2. Escribe un mensaje a tu bot y obtén tu chat ID con @userinfobot
+#      o visita https://api.telegram.org/bot<TU_TOKEN>/getUpdates
+#   3. Pega ambos valores aquí.
+notificaciones:
+  telegram:
+    bot_token: ""           
+    chat_id: ""             
+  email:
+    smtp_host: ""
+    smtp_port: 587
+    usuario: ""
+    password: ""
+    destinatario: ""

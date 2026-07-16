@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Scraping - Buscatrabajo{% endblock %}
+
+{% block content %}
+<header>
+    <h1>⚙️ Panel de Scraping</h1>
+    <p>Configura dónde y qué buscar, luego ejecuta el scraping.</p>
+</header>
+
+<div id="estado-box" class="estado-box estado-{{ estado.status }}">
+    <span id="estado-icono"></span>
+    <span id="estado-texto">{{ estado.message or 'Listo para iniciar.' }}</span>
+</div>
+
+<div class="metricas" id="metricas" style="display: none;">
+    <div class="metrica">
+        <div class="metrica-valor" id="metrica-total">0</div>
+        <div class="metrica-label">Procesadas</div>
+    </div>
+    <div class="metrica">
+        <div class="metrica-valor" id="metrica-nuevas">0</div>
+        <div class="metrica-label">Nuevas relevantes</div>
+    </div>
+    <div class="metrica">
+        <div class="metrica-valor" id="metrica-eliminadas">0</div>
+        <div class="metrica-label">Eliminadas</div>
+    </div>
+    <div class="metrica">
+        <div class="metrica-valor" id="metrica-relevantes">0</div>
+        <div class="metrica-label">Total relevantes</div>
+    </div>
+</div>
+
+<section class="panel">
+    <h2>Configuración</h2>
+    <form id="scrape-form">
+        <div class="form-grid">
+            <div class="campo">
+                <label>Portales a scrapear</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="portales" value="elempleo" checked>
+                        Elempleo (Colombia)
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="portales" value="infojobs" checked>
+                        InfoJobs (España / remoto)
+                    </label>
+                </div>
+            </div>
+
+            <div class="campo">
+                <label for="umbral">Umbral de relevancia mínimo</label>
+                <input type="number" id="umbral" name="umbral" value="{{ config.umbral_relevancia }}" min="0" max="100">
+            </div>
+
+            <div class="campo">
+                <label>Opciones</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="mantener_viejas" value="1">
+                        Mantener ofertas viejas
+                    </label>
+                    <label class="checkbox-item" id="label-notificar" title="Requiere configurar Telegram en config.yaml">
+                        <input type="checkbox" name="notificar" value="1" {% if not telegram_configurado %}disabled{% endif %}>
+                        Enviar notificación al terminar
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="seccion-terminos">
+            <h3>Términos de búsqueda por portal</h3>
+            <p class="mb-0">Escribe un término por línea para cada portal.</p>
+
+            <div class="form-grid mt-1">
+                <div class="campo terminos-portal">
+                    <label for="terminos-elempleo">Elempleo</label>
+                    <textarea id="terminos-elempleo" name="terminos_elempleo" rows="5">{{ config.busquedas.elempleo | join('\n') }}</textarea>
+                </div>
+
+                <div class="campo terminos-portal">
+                    <label for="terminos-infojobs">InfoJobs</label>
+                    <textarea id="terminos-infojobs" name="terminos_infojobs" rows="5">{{ config.busquedas.infojobs | join('\n') }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <button type="submit" id="btn-iniciar" class="boton boton-exito">
+                ▶️ Iniciar scraping
+            </button>
+        </div>
+    </form>
+</section>
+
+<section class="panel">
+    <h2>🔔 Notificaciones</h2>
+    <p>Las notificaciones se configuran en el archivo <code>config.yaml</code>. Actualmente solo se soporta Telegram.</p>
+
+    <div id="telegram-status" class="estado-box estado-idle mt-1">
+        Verificando configuración de Telegram...
+    </div>
+
+    <div class="mt-2">
+        <button type="button" id="btn-telegram-test" class="boton" disabled>
+            📨 Enviar mensaje de prueba
+        </button>
+    </div>
+</section>
+
+<section class="panel" id="resultados-panel" style="display: none;">
+    <h2>Ofertas encontradas</h2>
+    <div id="resultados-contenido">
+        <p>Las ofertas aparecerán aquí al finalizar.</p>
+    </div>
+</section>
+
+<script>
+const estadoBox = document.getElementById('estado-box');
+const estadoTexto = document.getElementById('estado-texto');
+const estadoIcono = document.getElementById('estado-icono');
+const btnIniciar = document.getElementById('btn-iniciar');
+const metricas = document.getElementById('metricas');
+const resultadosPanel = document.getElementById('resultados-panel');
+const resultadosContenido = document.getElementById('resultados-contenido');
+
+let intervaloEstado = null;
+
+function actualizarEstado(data) {
+    estadoBox.className = 'estado-box estado-' + data.status;
+
+    if (data.status === 'running') {
+        estadoIcono.innerHTML = '<span class="spinner"></span>';
+        btnIniciar.disabled = true;
+        btnIniciar.textContent = '⏳ Scraping en ejecución...';
+        metricas.style.display = 'grid';
+    } else if (data.status === 'completed') {
+        estadoIcono.innerHTML = '✅';
+        btnIniciar.disabled = false;
+        btnIniciar.textContent = '▶️ Iniciar scraping';
+        metricas.style.display = 'grid';
+    } else if (data.status === 'error') {
+        estadoIcono.innerHTML = '❌';
+        btnIniciar.disabled = false;
+        btnIniciar.textContent = '▶️ Reintentar scraping';
+        metricas.style.display = 'none';
+    } else {
+        estadoIcono.innerHTML = '';
+        btnIniciar.disabled = false;
+        btnIniciar.textContent = '▶️ Iniciar scraping';
+        metricas.style.display = 'none';
+    }
+
+    estadoTexto.textContent = data.message || 'Listo para iniciar.';
+    document.getElementById('metrica-total').textContent = data.total || 0;
+    document.getElementById('metrica-nuevas').textContent = data.nuevas || 0;
+    document.getElementById('metrica-eliminadas').textContent = data.eliminadas || 0;
+    document.getElementById('metrica-relevantes').textContent = data.relevantes || 0;
+}
+
+async function consultarEstado() {
+    try {
+        const res = await fetch('/api/scrape/status');
+        const data = await res.json();
+        actualizarEstado(data);
+
+        if (data.status === 'completed' || data.status === 'error') {
+            clearInterval(intervaloEstado);
+            if (data.status === 'completed') {
+                await cargarResultados();
+            }
+        }
+    } catch (e) {
+        console.error('Error consultando estado:', e);
+    }
+}
+
+async function cargarResultados() {
+    try {
+        const res = await fetch('/api/scrape/results');
+        const data = await res.json();
+
+        if (data.ofertas && data.ofertas.length > 0) {
+            resultadosPanel.style.display = 'block';
+            let html = '<div class="ofertas">';
+            data.ofertas.forEach(o => {
+                const tags = (o.palabras_detectadas || [])
+                    .slice(0, 8)
+                    .map(p => `<span class="tag ${p.includes('-') ? 'tag-negativa' : ''}">${p}</span>`)
+                    .join('');
+
+                html += `
+                    <article class="oferta">
+                        <div class="oferta-header">
+                            <h2 class="oferta-titulo">
+                                <a href="${o.url}" target="_blank" rel="noopener noreferrer">${o.titulo}</a>
+                            </h2>
+                            <span class="oferta-puntos">${o.puntos_relevancia} pts</span>
+                        </div>
+                        <div class="oferta-meta">
+                            <span>🏢 ${o.empresa || 'No especificada'}</span>
+                            <span>🌎 ${o.modalidad || 'No especificada'}</span>
+                            <span>📍 ${o.ubicacion || 'No especificada'}</span>
+                            <span>💰 ${o.salario || 'No especificado'}</span>
+                            <span>🔗 ${o.portal}</span>
+                        </div>
+                        <div class="oferta-tags">${tags}</div>
+                    </article>
+                `;
+            });
+            html += '</div>';
+            resultadosContenido.innerHTML = html;
+        } else {
+            resultadosPanel.style.display = 'block';
+            resultadosContenido.innerHTML = '<p>No se encontraron ofertas relevantes en esta ejecución.</p>';
+        }
+    } catch (e) {
+        console.error('Error cargando resultados:', e);
+    }
+}
+
+document.getElementById('scrape-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const portales = Array.from(formData.getAll('portales'));
+    const mantenerViejas = formData.has('mantener_viejas');
+    const notificar = formData.has('notificar');
+    const umbral = parseInt(formData.get('umbral'), 10);
+
+    const terminos = {
+        elempleo: formData.get('terminos_elempleo').split('\n').map(t => t.trim()).filter(t => t),
+        infojobs: formData.get('terminos_infojobs').split('\n').map(t => t.trim()).filter(t => t),
+    };
+
+    if (portales.length === 0) {
+        alert('Debes seleccionar al menos un portal.');
+        return;
+    }
+
+    resultadosPanel.style.display = 'none';
+    resultadosContenido.innerHTML = '<p>Las ofertas aparecerán aquí al finalizar.</p>';
+
+    try {
+        const res = await fetch('/api/scrape/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                portales: portales,
+                terminos: terminos,
+                mantener_viejas: mantenerViejas,
+                umbral: umbral,
+                notificar: notificar,
+            }),
+        });
+
+        const data = await res.json();
+        if (!data.ok) {
+            alert(data.message);
+            return;
+        }
+
+        actualizarEstado({ status: 'running', message: 'Scraping iniciado...' });
+        if (intervaloEstado) clearInterval(intervaloEstado);
+        intervaloEstado = setInterval(consultarEstado, 2000);
+    } catch (err) {
+        alert('Error iniciando scraping: ' + err.message);
+    }
+});
+
+async function verificarTelegram() {
+    const statusBox = document.getElementById('telegram-status');
+    const btnTest = document.getElementById('btn-telegram-test');
+    const chkNotificar = document.querySelector('input[name="notificar"]');
+
+    try {
+        const res = await fetch('/api/notificaciones/telegram/status');
+        const data = await res.json();
+
+        if (data.configurado) {
+            statusBox.className = 'estado-box estado-completed mt-1';
+            statusBox.textContent = '✅ Telegram configurado. Puedes enviar notificaciones al terminar el scraping.';
+            btnTest.disabled = false;
+            if (chkNotificar) chkNotificar.disabled = false;
+        } else {
+            statusBox.className = 'estado-box estado-error mt-1';
+            statusBox.innerHTML = '❌ Telegram no configurado. Editá <code>config.yaml</code> con tu <code>bot_token</code> y <code>chat_id</code>.';
+            btnTest.disabled = true;
+            if (chkNotificar) {
+                chkNotificar.disabled = true;
+                chkNotificar.checked = false;
+            }
+        }
+    } catch (e) {
+        statusBox.className = 'estado-box estado-error mt-1';
+        statusBox.textContent = 'Error verificando configuración de Telegram.';
+    }
+}
+
+document.getElementById('btn-telegram-test').addEventListener('click', async function() {
+    const statusBox = document.getElementById('telegram-status');
+    const btnTest = document.getElementById('btn-telegram-test');
+    btnTest.disabled = true;
+    statusBox.className = 'estado-box estado-running mt-1';
+    statusBox.textContent = 'Enviando mensaje de prueba...';
+
+    try {
+        const res = await fetch('/api/notificaciones/telegram/test', { method: 'POST' });
+        const data = await res.json();
+
+        if (data.ok) {
+            statusBox.className = 'estado-box estado-completed mt-1';
+            statusBox.textContent = `✅ ${data.message} (bot: @${data.bot})`;
+        } else {
+            statusBox.className = 'estado-box estado-error mt-1';
+            statusBox.textContent = `❌ ${data.message}`;
+        }
+    } catch (e) {
+        statusBox.className = 'estado-box estado-error mt-1';
+        statusBox.textContent = 'Error enviando mensaje de prueba.';
+    } finally {
+        btnTest.disabled = false;
+    }
+});
+
+// Consultar estado al cargar la página
+consultarEstado().then(() => {
+    const estadoInicial = estadoTexto.textContent.toLowerCase();
+    if (estadoInicial.includes('finalizado') || estadoInicial.includes('completed')) {
+        cargarResultados();
+    }
+    if (estadoInicial.includes('ejecución') || estadoInicial.includes('iniciando')) {
+        intervaloEstado = setInterval(consultarEstado, 2000);
+    }
+});
+verificarTelegram();
+</script>
+{% endblock %}

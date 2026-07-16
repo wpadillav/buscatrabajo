@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Buscatrabajo - Ofertas{% endblock %}
+
+{% block content %}
+<header>
+    <h1>🔍 Buscatrabajo</h1>
+    <p>Ofertas de empleo remoto y freelance filtradas para tu perfil</p>
+</header>
+
+<section class="filtros">
+    <form method="GET" action="{{ url_for('index') }}">
+        <div class="campo">
+            <label for="q">Buscar</label>
+            <input type="text" id="q" name="q" value="{{ busqueda }}" placeholder="Ej: devops, soporte, python...">
+        </div>
+        <div class="campo">
+            <label for="portal">Portal</label>
+            <select id="portal" name="portal">
+                <option value="">Todos</option>
+                {% for p in portales %}
+                <option value="{{ p }}" {% if portal == p %}selected{% endif %}>{{ p | capitalize }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="campo">
+            <label for="relevantes">Relevancia</label>
+            <select id="relevantes" name="relevantes">
+                <option value="1" {% if solo_relevantes %}selected{% endif %}>Solo relevantes</option>
+                <option value="0" {% if not solo_relevantes %}selected{% endif %}>Todas</option>
+            </select>
+        </div>
+        <button type="submit" class="boton">Filtrar</button>
+        <a href="{{ url_for('index') }}" class="boton boton-secundario">Limpiar</a>
+    </form>
+</section>
+
+<p class="resumen">
+    Mostrando <strong>{{ ofertas | length }}</strong> de <strong>{{ total }}</strong> ofertas.
+    {% if solo_relevantes %}Solo se muestran las que superan el umbral de relevancia.{% endif %}
+</p>
+
+{% if ofertas %}
+<div class="ofertas">
+    {% for oferta in ofertas %}
+    <article class="oferta">
+        <div class="oferta-header">
+            <h2 class="oferta-titulo">
+                <a href="{{ oferta.url }}" target="_blank" rel="noopener noreferrer">
+                    {{ oferta.titulo }}
+                </a>
+            </h2>
+            <span class="oferta-puntos">{{ oferta.puntos_relevancia }} pts</span>
+        </div>
+        <div class="oferta-meta">
+            <span>🏢 {{ oferta.empresa or 'No especificada' }}</span>
+            <span>🌎 {{ oferta.modalidad or 'No especificada' }}</span>
+            <span>📍 {{ oferta.ubicacion or 'No especificada' }}</span>
+            <span>💰 {{ oferta.salario or 'No especificado' }}</span>
+            <span>📅 {{ oferta.fecha_publicacion or 'Sin fecha' }}</span>
+            <span>🔗 {{ oferta.portal | capitalize }}</span>
+        </div>
+        {% if oferta.descripcion %}
+        <p class="oferta-descripcion">{{ oferta.descripcion[:250] }}{% if oferta.descripcion | length > 250 %}...{% endif %}</p>
+        {% endif %}
+        <div class="oferta-tags">
+            {% for palabra in oferta.palabras_detectadas[:8] %}
+            <span class="tag {% if '-' in palabra %}tag-negativa{% endif %}">{{ palabra }}</span>
+            {% endfor %}
+        </div>
+    </article>
+    {% endfor %}
+</div>
+
+{% if total_paginas > 1 %}
+<div class="paginacion">
+    {% if pagina > 1 %}
+    <a href="{{ url_for('index', pagina=pagina-1, q=busqueda, portal=portal, relevantes='1' if solo_relevantes else '0') }}">← Anterior</a>
+    {% endif %}
+
+    {% for p in range(1, total_paginas + 1) %}
+        {% if p == pagina %}
+        <span class="actual">{{ p }}</span>
+        {% else %}
+        <a href="{{ url_for('index', pagina=p, q=busqueda, portal=portal, relevantes='1' if solo_relevantes else '0') }}">{{ p }}</a>
+        {% endif %}
+    {% endfor %}
+
+    {% if pagina < total_paginas %}
+    <a href="{{ url_for('index', pagina=pagina+1, q=busqueda, portal=portal, relevantes='1' if solo_relevantes else '0') }}">Siguiente →</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="vacio">
+    <p>No se encontraron ofertas con los filtros seleccionados.</p>
+    <p>Ejecuta <code>python main.py</code> para actualizar la base de datos.</p>
+</div>
+{% endif %}
+{% endblock %}

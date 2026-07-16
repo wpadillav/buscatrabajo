@@ -1,0 +1,57 @@
+# Entornos virtuales
+venv/
+.env/
+.venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Datos generados por la aplicación
+# Ignoramos la base de datos SQLite y los CSV/logs generados durante ejecuciones.
+*.db
+*.csv
+*.log
+
+# Configuración local (permite tener un config.yaml personal sin subirlo)
+config.local.yaml
+.env
+
+# Tests y caché
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# IDEs y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Flask / Python
+instance/
+.webassets-cache
