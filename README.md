@@ -204,6 +204,7 @@ python -m pytest tests/
 - [`docs/arquitectura.md`](docs/arquitectura.md) — Cómo está construida la aplicación.
 - [`docs/api.md`](docs/api.md) — Endpoints de la API interna.
 - [`docs/desarrollo.md`](docs/desarrollo.md) — Cómo extender el proyecto.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — Cómo contribuir al proyecto.
 
 ---
 
