@@ -93,22 +93,46 @@ Estas palabras se buscan en **todo el texto** de la oferta (título, empresa, ub
 
 **Positivas (suman):**
 ```
-soporte: 7
-devops: 9
-linux: 8
+soporte: 8
+programador: 8
+python: 6
 ```
 
 **Negativas (restan):**
 ```
 senior: -10
-java: -3
+inglés: -8
 ```
 
 Vienen precargadas desde `config.yaml` (`palabras_clave_positivas` y `palabras_clave_negativas`). Lo que edites aquí aplica solo a esa ejecución; el archivo no se modifica.
 
 ---
 
-## 3. Ejecutar el scraping
+## 3. Analizar tu HV con IA (opcional)
+
+En lugar de llenar el formulario a mano, puedes subir tu hoja de vida y dejar que la IA genere el perfil de búsqueda por ti.
+
+### Configuración LLM
+
+- **Proveedor LLM**: `Gemini (Google)` o `Compatible con OpenAI` (sirve para OpenAI, OpenRouter, Groq, Ollama local, etc.).
+- **API Key**: la clave de tu proveedor. Se puede guardar en `config.yaml` (sección `ia`) o escribirla aquí para un solo análisis. No se necesita para endpoints locales como Ollama.
+- **URL base**: déjala vacía para usar la del proveedor, o escribe el endpoint compatible (ej. `https://openrouter.ai/api/v1`, `http://localhost:11434/v1`).
+- **Nombre del modelo**: ej. `gemini-2.0-flash`, `openai/gpt-4o-mini`, `llama3.1`.
+
+### Analizar
+
+1. Selecciona tu HV en **PDF, DOCX o TXT** (máx. 5 MB).
+2. Pulsa **"Analizar HV"**.
+3. La IA rellena automáticamente los términos de búsqueda, las modalidades, las palabras clave con puntajes y el bonus de título.
+4. **Revisa y ajusta** lo que necesites — la IA propone, tú decides.
+
+El archivo se procesa en memoria y no se guarda en el servidor. Si usas un proveedor en la nube, el texto de tu HV se envía a ese tercero; si prefieres que no salga de tu equipo, usa Ollama local.
+
+> Si tu PDF es un escaneo (imagen sin texto), la extracción fallará. Conviértelo a PDF con texto o DOCX.
+
+---
+
+## 4. Ejecutar el scraping
 
 Pulsa el botón **"Iniciar scraping"**.
 
@@ -121,7 +145,7 @@ El scraping puede tardar entre 30 segundos y 2 minutos dependiendo de la cantida
 
 ---
 
-## 4. Ver resultados
+## 5. Ver resultados
 
 Cuando termine, aparecerá automáticamente una sección con las ofertas encontradas.
 
@@ -135,7 +159,7 @@ Puedes hacer clic en el título para abrir la oferta original en una nueva pesta
 
 ---
 
-## 5. Notificaciones por Telegram
+## 6. Notificaciones por Telegram
 
 Podés recibir un mensaje en Telegram cada vez que termine un scraping con ofertas relevantes.
 
@@ -150,7 +174,7 @@ Para más detalles, leé [`telegram.md`](telegram.md).
 
 ---
 
-## 6. Dashboard de ofertas guardadas
+## 7. Dashboard de ofertas guardadas
 
 Ve a **http://127.0.0.1:5000/** para ver todas las ofertas almacenadas en la base de datos.
 
@@ -162,7 +186,7 @@ Desde allí puedes:
 
 ---
 
-## 7. Buenas prácticas
+## 8. Buenas prácticas
 
 - No ejecutes scraping muy frecuentemente (máximo 2-3 veces al día) para no saturar los portales.
 - Revisa periódicamente si los selectores siguen funcionando.

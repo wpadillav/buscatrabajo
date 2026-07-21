@@ -15,6 +15,7 @@ Por defecto está enfocado en perfiles de **soporte técnico / call center en es
 
 - **Interfaz web** para configurar y ejecutar el scraping.
 - Selección de portales: Elempleo e InfoJobs.
+- **Análisis de HV/CV con IA**: sube tu hoja de vida y la IA rellena el perfil de búsqueda (términos, modalidades, palabras clave). Soporta Gemini y cualquier API compatible con OpenAI (OpenRouter, Groq, Ollama...).
 - Personalización de términos de búsqueda por portal.
 - Bonus configurable por palabras clave en el título de la oferta.
 - Ajuste del umbral de relevancia en tiempo real.
@@ -39,7 +40,9 @@ buscatrabajo/
 │   ├── database.py          # SQLite
 │   ├── scorer.py            # Motor de relevancia
 │   ├── notificador.py       # Telegram / Email
-│   └── worker.py            # Worker asíncrono de scraping
+│   ├── worker.py            # Worker asíncrono de scraping
+│   ├── cv.py                # Extracción de texto de HV (PDF/DOCX/TXT)
+│   └── perfil_ia.py         # Análisis de HV con LLM (Gemini / OpenAI-compatible)
 ├── scrapers/
 │   ├── base.py              # Clase base
 │   ├── elempleo.py          # Scraper Elempleo CO
@@ -49,7 +52,9 @@ buscatrabajo/
 │   ├── templates/           # HTML con Jinja2
 │   └── static/              # CSS
 ├── tests/
-│   └── test_scorer.py       # Tests del motor de scoring
+│   ├── test_scorer.py       # Tests del motor de scoring
+│   ├── test_cv.py           # Tests de extracción de HV
+│   └── test_perfil_ia.py    # Tests del análisis con IA
 ├── data/
 │   └── ofertas.db           # Base de datos local
 └── docs/                    # Documentación extendida
@@ -146,6 +151,7 @@ Edita `config.yaml` para ajustar la configuración por defecto (los valores de p
 - `bonus_titulo`: palabras que suman puntos extra si aparecen en el título (`puntos` define cuánto suman).
 - `umbral_relevancia`: puntaje mínimo para considerar una oferta relevante.
 - `busquedas`: términos de búsqueda por portal (usados por defecto en CLI y web).
+- `ia`: proveedor LLM para el análisis de HV (`proveedor`: `gemini` u `openai`, `api_key`, `url_base`, `modelo`). También editable por análisis desde el panel web.
 - `notificaciones`: configuración de Telegram y email.
 
 ---
@@ -233,12 +239,3 @@ Ver [`LICENSE`](LICENSE) para el texto completo.
 2. **Respeta los robots.txt** y no abuses de las peticiones. El delay entre páginas está configurado por defecto.
 3. **LinkedIn y Workana no están incluidos** en este MVP por protecciones anti-bot.
 4. **Servidor de desarrollo:** Flask corre en modo desarrollo. Para producción usa Gunicorn + Nginx.
-
----
-
-## 📌 Próximos pasos sugeridos
-
-- Agregar LinkedIn vía lectura de alertas de correo (IMAP).
-- Agregar Workana con Playwright y autenticación.
-- Dashboard con estadísticas históricas.
-- Sistema de "favoritos" y "ya apliqué".

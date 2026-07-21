@@ -109,11 +109,15 @@ Todos estos criterios se definen en `config.yaml`; el panel web permite sobreesc
 
 Ejecuta el scraping de forma asíncrona. Mantiene un estado compartido protegido con locks.
 
+### `core/cv.py` y `core/perfil_ia.py`
+
+Análisis de hojas de vida con IA: `cv.py` extrae el texto de archivos PDF/DOCX/TXT y `perfil_ia.py` lo envía al LLM configurado (Gemini o API compatible con OpenAI) para generar el perfil de búsqueda que consume el panel.
+
 ### `web/server.py`
 
 Aplicación Flask. Expone:
 - Rutas HTML: `/`, `/scrape`, `/oferta/<id>`.
-- API JSON: `/api/scrape/start`, `/api/scrape/status`, `/api/scrape/results`, `/api/notificaciones/telegram/*`.
+- API JSON: `/api/scrape/start`, `/api/scrape/status`, `/api/scrape/results`, `/api/cv/analizar`, `/api/notificaciones/telegram/*`.
 
 ### `scrapers/elempleo.py` y `scrapers/infojobs.py`
 

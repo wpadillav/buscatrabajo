@@ -124,6 +124,15 @@ requests:
   max_intentos: 3
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 
+# Análisis de HV/CV con IA (opcional)
+# proveedor: "gemini" o "openai" (cualquier API compatible con OpenAI: OpenRouter, Groq, Ollama, etc.)
+# La API key y la URL base también se pueden escribir directamente en el panel web por análisis.
+ia:
+  proveedor: "gemini"
+  api_key: ""
+  url_base: ""                    # vacío = la del proveedor; ej. https://openrouter.ai/api/v1 o http://localhost:11434/v1
+  modelo: "gemini-2.0-flash"
+
 # Notificaciones (opcional)
 # Para Telegram:
 #   1. Crea un bot con @BotFather y copia el token que te da.

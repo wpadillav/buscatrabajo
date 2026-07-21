@@ -139,6 +139,21 @@ header p {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+.password-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+}
+
+.password-group input {
+    flex: 1;
+}
+
+.boton-icono {
+    padding: 0.6rem 0.75rem;
+    line-height: 1;
+}
+
 .checkbox-group {
     display: flex;
     flex-wrap: wrap;

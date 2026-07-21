@@ -149,6 +149,49 @@
 </section>
 
 <section class="panel">
+    <h2>📄 Analizar HV con IA</h2>
+    <p>Sube tu hoja de vida (PDF, DOCX o TXT) y la IA rellenará automáticamente los términos de búsqueda, modalidades y palabras clave del formulario. Revisa y ajusta antes de iniciar el scraping.</p>
+
+    <div class="seccion-terminos">
+        <h3>Configuración LLM</h3>
+        <div class="form-grid mt-1">
+            <div class="campo">
+                <label for="ia-proveedor">Proveedor LLM</label>
+                <select id="ia-proveedor" name="ia_proveedor">
+                    <option value="gemini" {% if config.ia.proveedor == 'gemini' %}selected{% endif %}>Gemini (Google)</option>
+                    <option value="openai" {% if config.ia.proveedor == 'openai' %}selected{% endif %}>Compatible con OpenAI (OpenRouter, Groq, Ollama...)</option>
+                </select>
+            </div>
+
+            <div class="campo">
+                <label for="ia-api-key">API Key</label>
+                <div class="password-group">
+                    <input type="password" id="ia-api-key" name="ia_api_key" value="{{ config.ia.api_key }}" placeholder="Pégala aquí o guárdala en config.yaml" autocomplete="off">
+                    <button type="button" id="btn-toggle-api-key" class="boton boton-icono" title="Mostrar/ocultar">👁</button>
+                </div>
+            </div>
+
+            <div class="campo">
+                <label for="ia-url-base">URL base</label>
+                <input type="text" id="ia-url-base" name="ia_url_base" value="{{ config.ia.url_base }}" placeholder="Vacío = la del proveedor. Ej: https://openrouter.ai/api/v1">
+            </div>
+
+            <div class="campo">
+                <label for="ia-modelo">Nombre del modelo</label>
+                <input type="text" id="ia-modelo" name="ia_modelo" value="{{ config.ia.modelo }}" placeholder="Ej: gemini-2.0-flash">
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-2">
+        <input type="file" id="cv-archivo" accept=".pdf,.docx,.txt">
+        <button type="button" id="btn-analizar-cv" class="boton">🤖 Analizar HV</button>
+    </div>
+
+    <div id="cv-estado" class="estado-box estado-idle mt-1" style="display: none;"></div>
+</section>
+
+<section class="panel">
     <h2>🔔 Notificaciones</h2>
     <p>Las notificaciones se configuran en el archivo <code>config.yaml</code>. Actualmente solo se soporta Telegram.</p>
 
@@ -348,6 +391,96 @@ document.getElementById('scrape-form').addEventListener('submit', async function
         intervaloEstado = setInterval(consultarEstado, 2000);
     } catch (err) {
         alert('Error iniciando scraping: ' + err.message);
+    }
+});
+
+// --- Análisis de HV con IA ---
+
+const cvArchivo = document.getElementById('cv-archivo');
+const btnAnalizarCv = document.getElementById('btn-analizar-cv');
+const cvEstado = document.getElementById('cv-estado');
+
+document.getElementById('btn-toggle-api-key').addEventListener('click', function() {
+    const input = document.getElementById('ia-api-key');
+    input.type = input.type === 'password' ? 'text' : 'password';
+});
+
+function mostrarEstadoCv(tipo, mensaje) {
+    cvEstado.style.display = 'block';
+    cvEstado.className = 'estado-box estado-' + tipo + ' mt-1';
+    cvEstado.textContent = mensaje;
+}
+
+function dictALineas(dict) {
+    return Object.entries(dict || {}).map(([k, v]) => `${k}: ${v}`).join('\n');
+}
+
+function rellenarFormulario(perfil) {
+    if (perfil.terminos) {
+        if (perfil.terminos.elempleo) {
+            document.getElementById('terminos-elempleo').value = perfil.terminos.elempleo.join('\n');
+        }
+        if (perfil.terminos.infojobs) {
+            document.getElementById('terminos-infojobs').value = perfil.terminos.infojobs.join('\n');
+        }
+    }
+
+    if (perfil.modalidades) {
+        document.querySelectorAll('input[name="modalidades"]').forEach(chk => {
+            chk.checked = perfil.modalidades.includes(chk.value);
+        });
+    }
+
+    if (perfil.palabras_positivas) {
+        document.getElementById('palabras-positivas').value = dictALineas(perfil.palabras_positivas);
+    }
+    if (perfil.palabras_negativas) {
+        document.getElementById('palabras-negativas').value = dictALineas(perfil.palabras_negativas);
+    }
+
+    if (perfil.stack_titulo) {
+        const extras = [];
+        document.querySelectorAll('input[name="stack_titulo"]').forEach(chk => {
+            chk.checked = perfil.stack_titulo.includes(chk.value);
+        });
+        perfil.stack_titulo.forEach(palabra => {
+            const existe = document.querySelector(`input[name="stack_titulo"][value="${palabra}"]`);
+            if (!existe) extras.push(palabra);
+        });
+        document.getElementById('stack-titulo-extra').value = extras.join('\n');
+    }
+}
+
+btnAnalizarCv.addEventListener('click', async function() {
+    if (!cvArchivo.files || cvArchivo.files.length === 0) {
+        mostrarEstadoCv('error', '❌ Selecciona primero un archivo (PDF, DOCX o TXT).');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('archivo', cvArchivo.files[0]);
+    formData.append('proveedor', document.getElementById('ia-proveedor').value);
+    formData.append('api_key', document.getElementById('ia-api-key').value);
+    formData.append('url_base', document.getElementById('ia-url-base').value);
+    formData.append('modelo', document.getElementById('ia-modelo').value);
+
+    btnAnalizarCv.disabled = true;
+    mostrarEstadoCv('running', 'Analizando tu HV con IA, esto puede tardar unos segundos...');
+
+    try {
+        const res = await fetch('/api/cv/analizar', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (data.ok) {
+            rellenarFormulario(data.perfil);
+            mostrarEstadoCv('completed', '✅ Perfil generado. Revisa el formulario y ajusta lo que necesites antes de iniciar el scraping.');
+        } else {
+            mostrarEstadoCv('error', `❌ ${data.message}`);
+        }
+    } catch (e) {
+        mostrarEstadoCv('error', '❌ Error de red al analizar la HV.');
+    } finally {
+        btnAnalizarCv.disabled = false;
     }
 });
 

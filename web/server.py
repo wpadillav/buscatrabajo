@@ -90,6 +90,41 @@ def crear_app(config_path: Path | None = None, db_path: Path | None = None) -> F
             telegram_configurado=telegram_ok,
         )
 
+    @app.route("/api/cv/analizar", methods=["POST"])
+    def api_cv_analizar():
+        """Analiza una HV/CV con IA y devuelve el perfil de búsqueda generado."""
+        from core.cv import extraer_texto
+        from core.perfil_ia import ErrorProveedorIA, analizar_cv
+
+        archivo = request.files.get("archivo")
+        if not archivo or not archivo.filename:
+            return jsonify({"ok": False, "message": "Debes adjuntar un archivo (PDF, DOCX o TXT)."}), 400
+
+        contenido = archivo.read()
+        if len(contenido) > 5 * 1024 * 1024:
+            return jsonify({"ok": False, "message": "El archivo supera el límite de 5 MB."}), 400
+
+        try:
+            texto = extraer_texto(archivo.filename, contenido)
+        except ValueError as e:
+            return jsonify({"ok": False, "message": str(e)}), 400
+
+        config = cargar_config(config_path)
+        cfg_config = config.get("ia", {})
+        cfg_ia = {
+            "proveedor": request.form.get("proveedor") or cfg_config.get("proveedor", "gemini"),
+            "api_key": request.form.get("api_key") or cfg_config.get("api_key", ""),
+            "url_base": request.form.get("url_base") or cfg_config.get("url_base", ""),
+            "modelo": request.form.get("modelo") or cfg_config.get("modelo", ""),
+        }
+
+        try:
+            perfil = analizar_cv(texto, cfg_ia)
+        except ErrorProveedorIA as e:
+            return jsonify({"ok": False, "message": str(e)}), 502
+
+        return jsonify({"ok": True, "perfil": perfil})
+
     @app.route("/api/scrape/status")
     def api_scrape_status():
         """Devuelve el estado actual del worker de scraping."""

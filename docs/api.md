@@ -107,6 +107,41 @@ Todos los campos son opcionales; si se omiten, se usan los valores de `config.ya
 
 ---
 
+### `POST /api/cv/analizar`
+
+Analiza una hoja de vida con IA y devuelve el perfil de búsqueda generado (términos, modalidades, palabras clave y bonus de título). El archivo se procesa en memoria y no se guarda.
+
+**Body (multipart/form-data):**
+
+| Campo | Descripción |
+|-------|-------------|
+| `archivo` | HV en PDF, DOCX o TXT (máx. 5 MB). Obligatorio. |
+| `proveedor` | `gemini` u `openai` (compatible con OpenAI: OpenRouter, Groq, Ollama...). |
+| `api_key` | API key del proveedor. No requerida para endpoints locales. |
+| `url_base` | URL base de la API (vacío = la del proveedor). |
+| `modelo` | Nombre del modelo (ej. `gemini-2.0-flash`). |
+
+Los campos de configuración son opcionales; si se omiten, se usan los de la sección `ia` de `config.yaml`.
+
+**Respuesta exitosa (200):**
+
+```json
+{
+  "ok": true,
+  "perfil": {
+    "terminos": {"elempleo": ["soporte remoto"], "infojobs": ["soporte tecnico remoto"]},
+    "modalidades": ["remoto"],
+    "palabras_positivas": {"soporte": 8, "python": 6},
+    "palabras_negativas": {"senior": -10, "inglés": -8},
+    "stack_titulo": ["soporte", "junior"]
+  }
+}
+```
+
+**Respuestas de error:** 400 si falta el archivo, el formato no es soportado o no se pudo extraer texto; 502 si el proveedor de IA falla (API key inválida, cuota, JSON malformado).
+
+---
+
 ### `POST /api/notificaciones/telegram/test`
 
 Envía un mensaje de prueba al chat de Telegram configurado en `config.yaml`.
