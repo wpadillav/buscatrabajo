@@ -18,11 +18,15 @@ class Scorer:
         positivas: dict[str, int],
         negativas: dict[str, int],
         umbral: int,
+        stack_titulo: list[str] | None = None,
+        bonus_titulo_puntos: int = 3,
     ):
         self.obligatorias = [self._normalizar(p) for p in obligatorias]
         self.positivas = {self._normalizar(k): v for k, v in positivas.items()}
         self.negativas = {self._normalizar(k): v for k, v in negativas.items()}
         self.umbral = umbral
+        self.stack_titulo = [self._normalizar(p) for p in (stack_titulo or [])]
+        self.bonus_titulo_puntos = bonus_titulo_puntos
 
     @staticmethod
     def _normalizar(texto: str) -> str:
@@ -33,7 +37,10 @@ class Scorer:
         return frase in self._normalizar(texto)
 
     def evaluar(self, oferta: OfertaEmpleo) -> OfertaEmpleo:
-        texto_completo = f"{oferta.titulo} {oferta.empresa} {oferta.ubicacion} {oferta.descripcion}"
+        texto_completo = (
+            f"{oferta.titulo} {oferta.empresa} {oferta.ubicacion} "
+            f"{oferta.modalidad} {oferta.descripcion}"
+        )
         texto_normalizado = self._normalizar(texto_completo)
 
         # 1. Debe cumplir al menos una palabra obligatoria
@@ -61,11 +68,10 @@ class Scorer:
 
         # 4. Bonus por palabras del stack exacto en el título
         titulo_normalizado = self._normalizar(oferta.titulo)
-        stack_titulo = ["sysadmin", "linux", "devops", "seguridad", "soporte", "infraestructura"]
-        for palabra in stack_titulo:
+        for palabra in self.stack_titulo:
             if palabra in titulo_normalizado:
-                puntos += 3
-                palabras_detectadas.append(f"titulo:{palabra} (+3)")
+                puntos += self.bonus_titulo_puntos
+                palabras_detectadas.append(f"titulo:{palabra} (+{self.bonus_titulo_puntos})")
 
         oferta.puntos_relevancia = max(0, puntos)
         oferta.palabras_detectadas = palabras_detectadas

@@ -1,52 +1,75 @@
-# Configuración del buscador de empleo remoto/freelance
-# Perfil: William Padilla - SysAdmin & Security Engineer con enfoque junior en dev
+# Configuración del buscador de empleo
+# Perfil: soporte técnico / call center en español (sin inglés) y desarrollador junior, con modalidad seleccionable
 
-# Palabras que DEBEN aparecer en el título o descripción para considerar la oferta
-palabras_clave_obligatorias:
-  - remoto
-  - teletrabajo
-  - home office
-  - remota
-  - desde casa
+# Modalidades de trabajo. Cada una agrupa las palabras que la identifican
+# en el texto de la oferta; al menos una debe aparecer para que la oferta
+# se considere. `activa` define la selección por defecto (CLI y panel web).
+modalidades:
+  remoto:
+    activa: true
+    palabras:
+      - remoto
+      - remota
+      - teletrabajo
+      - home office
+      - desde casa
+      - trabajo remoto
+  hibrido:
+    activa: false
+    palabras:
+      - híbrido
+      - hibrido
+      - híbrida
+      - mixto
+      - mixta
+  presencial:
+    activa: false
+    palabras:
+      - presencial
+      - oficina
+      - en sede
 
-# Palabras que suman puntos de relevancia si aparecen (stack y roles objetivo)
+# Palabras que suman puntos de relevancia si aparecen (perfil objetivo)
 palabras_clave_positivas:
-  sysadmin: 10
-  administrador de sistemas: 10
-  soporte: 7
-  infraestructura: 9
-  devops: 9
-  sre: 9
-  linux: 8
-  seguridad: 8
-  hardening: 8
-  red: 6
-  redes: 6
-  servidor: 7
-  servidores: 7
-  aws: 7
-  cloud: 6
-  docker: 7
-  ansible: 7
+  soporte: 8
+  soporte tecnico: 10
+  soporte al cliente: 10
+  mesa de ayuda: 10
+  helpdesk: 10
+  service desk: 10
+  call center: 9
+  contact center: 9
+  atención al cliente: 9
+  atencion al cliente: 9
+  servicio al cliente: 9
+  agente: 5
+  asesor: 6
+  programador: 8
+  desarrollador: 8
+  desarrollo: 5
+  junior: 7
+  jr: 7
+  trainee: 7
+  entry level: 7
+  practicante: 7
+  aprendiz: 6
   python: 6
   php: 5
-  bash: 5
-  nginx: 6
-  apache: 5
+  javascript: 5
+  sql: 5
   mysql: 5
-  mariadb: 5
-  freelance: 6
-  freelancer: 6
-  junior: 5
-  jr: 5
-  trainee: 5
-  entry level: 5
+  freelance: 5
   part-time: 4
   medio tiempo: 4
   horario flexible: 4
 
-# Palabras que restan puntos o descalifican (roles muy senior o fuera del perfil)
+# Palabras que restan puntos o descalifican (inglés requerido, seniority alto, nube/infraestructura)
 palabras_clave_negativas:
+  inglés: -8
+  ingles: -8
+  english: -8
+  bilingüe: -8
+  bilingue: -8
   senior: -10
   sr: -10
   lead: -10
@@ -56,10 +79,26 @@ palabras_clave_negativas:
   8 años: -8
   7 años: -7
   5 años: -5
-  java: -3
-  .net: -3
-  angular: -2
-  react: -2
+  cloud: -3
+  aws: -3
+  azure: -3
+  gcp: -3
+  devops: -3
+  infraestructura: -3
+  sysadmin: -3
+
+# Puntos extra si una de estas palabras aparece en el TÍTULO de la oferta
+bonus_titulo:
+  puntos: 3
+  palabras:
+    - soporte
+    - mesa de ayuda
+    - helpdesk
+    - call center
+    - programador
+    - desarrollador
+    - junior
+    - agente
 
 # Umbral mínimo de puntos para considerar una oferta relevante
 umbral_relevancia: 8
@@ -67,16 +106,16 @@ umbral_relevancia: 8
 # Términos de búsqueda por portal
 busquedas:
   elempleo:
-    - remoto sistemas
-    - teletrabajo soporte TI
-    - remoto administrador servidores
-    - remoto seguridad informática
-    - freelance infraestructura TI
+    - remoto soporte tecnico
+    - call center remoto español
+    - mesa de ayuda remota
+    - programador junior remoto
+    - agente servicio al cliente remoto
   infojobs:
-    - remoto sysadmin
     - teletrabajo soporte tecnico
-    - remoto infraestructura
-    - freelance tecnologia
+    - programador junior remoto
+    - call center remoto
+    - desarrollador junior remoto
 
 # Configuración de requests
 requests:

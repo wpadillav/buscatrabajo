@@ -25,6 +25,16 @@ def cargar_config(path: Path) -> dict:
         return yaml.safe_load(f)
 
 
+def _parsear_puntajes(valor) -> dict[str, int] | None:
+    """Valida un diccionario palabra -> puntos recibido por la API."""
+    if not isinstance(valor, dict):
+        return None
+    try:
+        return {str(k).strip(): int(v) for k, v in valor.items() if str(k).strip()}
+    except (TypeError, ValueError):
+        return None
+
+
 def crear_app(config_path: Path | None = None, db_path: Path | None = None) -> Flask:
     template_dir = Path(__file__).parent / "templates"
     static_dir = Path(__file__).parent / "static"
@@ -127,6 +137,24 @@ def crear_app(config_path: Path | None = None, db_path: Path | None = None) -> F
             umbral = int(umbral)
         notificar = bool(data.get("notificar", False))
 
+        stack_titulo = data.get("stack_titulo")
+        if stack_titulo is not None and not isinstance(stack_titulo, list):
+            stack_titulo = [stack_titulo]
+
+        positivas = _parsear_puntajes(data.get("palabras_positivas"))
+        negativas = _parsear_puntajes(data.get("palabras_negativas"))
+
+        # Modalidades seleccionadas -> palabras obligatorias según config.yaml
+        modalidades = data.get("modalidades")
+        obligatorias = None
+        if isinstance(modalidades, list):
+            cfg_modalidades = config.get("modalidades", {})
+            obligatorias = []
+            for nombre in modalidades:
+                modalidad = cfg_modalidades.get(str(nombre))
+                if modalidad:
+                    obligatorias.extend(modalidad.get("palabras", []))
+
         iniciado = worker.iniciar(
             config=config,
             portales=portales,
@@ -134,6 +162,10 @@ def crear_app(config_path: Path | None = None, db_path: Path | None = None) -> F
             mantener_viejas=mantener_viejas,
             umbral=umbral,
             notificar=notificar,
+            stack_titulo=stack_titulo,
+            positivas=positivas,
+            negativas=negativas,
+            obligatorias=obligatorias,
         )
 
         if not iniciado:

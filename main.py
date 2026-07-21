@@ -29,6 +29,7 @@ from core.database import Database
 from core.models import OfertaEmpleo
 from core.notificador import Notificador
 from core.scorer import Scorer
+from core.worker import modalidades_activas
 from scrapers.elempleo import ElempleoScraper
 from scrapers.infojobs import InfojobsScraper
 
@@ -43,11 +44,14 @@ def cargar_config(path: Path = CONFIG_PATH) -> dict:
 
 def ejecutar_scraping(config: dict, args) -> Database:
     db = Database()
+    bonus_config = config.get("bonus_titulo", {})
     scorer = Scorer(
-        obligatorias=config["palabras_clave_obligatorias"],
+        obligatorias=modalidades_activas(config),
         positivas=config["palabras_clave_positivas"],
         negativas=config["palabras_clave_negativas"],
         umbral=config["umbral_relevancia"],
+        stack_titulo=bonus_config.get("palabras", []),
+        bonus_titulo_puntos=bonus_config.get("puntos", 3),
     )
 
     scrapers_disponibles = {

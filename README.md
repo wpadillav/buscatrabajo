@@ -5,7 +5,7 @@
 
 Agregador de ofertas de empleo **remoto** y **freelance** con interfaz web.
 
-Diseñado para perfiles técnicos híbridos (SysAdmin / Seguridad / DevOps junior). Permite elegir desde el navegador qué portales scrapear, qué términos buscar y visualizar solo las ofertas relevantes encontradas.
+Por defecto está enfocado en perfiles de **soporte técnico / call center en español (sin inglés)** y **desarrollador junior**, con modalidad de trabajo seleccionable (remoto, híbrido o presencial). Todo el perfil de puntaje se puede ajustar desde el navegador o en `config.yaml`.
 
 > MVP enfocado en **Elempleo (Colombia)** e **InfoJobs**. LinkedIn y Workana quedan para una fase posterior porque requieren autenticación y tienen fuertes protecciones anti-bot.
 
@@ -16,6 +16,7 @@ Diseñado para perfiles técnicos híbridos (SysAdmin / Seguridad / DevOps junio
 - **Interfaz web** para configurar y ejecutar el scraping.
 - Selección de portales: Elempleo e InfoJobs.
 - Personalización de términos de búsqueda por portal.
+- Bonus configurable por palabras clave en el título de la oferta.
 - Ajuste del umbral de relevancia en tiempo real.
 - Ejecución asíncrona: el scraping corre en segundo plano sin bloquear la web.
 - Filtro por palabras clave y scoring según tu stack técnico.
@@ -85,10 +86,13 @@ Abre tu navegador en:
 Desde el panel `/scrape` puedes:
 
 1. Elegir los portales a scrapear.
-2. Escribir los términos de búsqueda (uno por línea).
-3. Ajustar el umbral de relevancia.
-4. Decidir si mantener o eliminar ofertas viejas.
-5. Pulsar **"Iniciar scraping"**.
+2. Elegir las modalidades aceptadas (remoto, híbrido, presencial).
+3. Escribir los términos de búsqueda (uno por línea).
+4. Seleccionar o escribir las palabras que reciben bonus al aparecer en el título.
+5. Editar las palabras clave positivas y negativas con sus puntajes.
+6. Ajustar el umbral de relevancia.
+7. Decidir si mantener o eliminar ofertas viejas.
+8. Pulsar **"Iniciar scraping"**.
 
 El scraping se ejecuta en segundo plano. La página muestra el estado, las métricas y las ofertas encontradas al finalizar.
 
@@ -134,11 +138,12 @@ python main.py --cli --notify
 
 ## 🛠️ Personalización
 
-Edita `config.yaml` para ajustar la configuración por defecto:
+Edita `config.yaml` para ajustar la configuración por defecto (los valores de puntaje también se pueden cambiar por ejecución desde el panel web, sin editar el archivo):
 
-- `palabras_clave_obligatorias`: modalidades que deben aparecer (remoto, teletrabajo, etc.).
+- `modalidades`: modalidades de trabajo aceptadas (`remoto`, `hibrido`, `presencial`); cada una agrupa las palabras que la identifican y `activa` define la selección por defecto.
 - `palabras_clave_positivas`: skills y roles que suman puntos.
 - `palabras_clave_negativas`: roles o requisitos que restan puntos.
+- `bonus_titulo`: palabras que suman puntos extra si aparecen en el título (`puntos` define cuánto suman).
 - `umbral_relevancia`: puntaje mínimo para considerar una oferta relevante.
 - `busquedas`: términos de búsqueda por portal (usados por defecto en CLI y web).
 - `notificaciones`: configuración de Telegram y email.

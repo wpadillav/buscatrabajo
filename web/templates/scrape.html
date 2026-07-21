@@ -51,6 +51,18 @@
             </div>
 
             <div class="campo">
+                <label>Modalidades aceptadas</label>
+                <div class="checkbox-group">
+                    {% for nombre, modalidad in config.modalidades.items() %}
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="modalidades" value="{{ nombre }}" {% if modalidad.activa %}checked{% endif %}>
+                        {{ nombre | capitalize }}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="campo">
                 <label for="umbral">Umbral de relevancia mínimo</label>
                 <input type="number" id="umbral" name="umbral" value="{{ config.umbral_relevancia }}" min="0" max="100">
             </div>
@@ -83,6 +95,47 @@
                 <div class="campo terminos-portal">
                     <label for="terminos-infojobs">InfoJobs</label>
                     <textarea id="terminos-infojobs" name="terminos_infojobs" rows="5">{{ config.busquedas.infojobs | join('\n') }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="seccion-terminos">
+            <h3>Bonus por palabras en el título</h3>
+            <p class="mb-0">Suman {{ config.bonus_titulo.puntos }} puntos extra si aparecen en el título de la oferta. Selecciona las sugeridas o escribe otras.</p>
+
+            <div class="form-grid mt-1">
+                <div class="campo">
+                    <label>Palabras sugeridas</label>
+                    <div class="checkbox-group">
+                        {% for palabra in config.bonus_titulo.palabras %}
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="stack_titulo" value="{{ palabra }}" checked>
+                            {{ palabra }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="campo">
+                    <label for="stack-titulo-extra">Otras palabras (una por línea)</label>
+                    <textarea id="stack-titulo-extra" name="stack_titulo_extra" rows="5" placeholder="helpdesk&#10;mesa de ayuda"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="seccion-terminos">
+            <h3>Palabras clave y puntajes</h3>
+            <p class="mb-0">Una por línea con formato <code>palabra: puntos</code>. Se buscan en todo el texto de la oferta.</p>
+
+            <div class="form-grid mt-1">
+                <div class="campo">
+                    <label for="palabras-positivas">Positivas (suman)</label>
+                    <textarea id="palabras-positivas" name="palabras_positivas" rows="8">{% for p, v in config.palabras_clave_positivas.items() %}{{ p }}: {{ v }}{{ "\n" if not loop.last }}{% endfor %}</textarea>
+                </div>
+
+                <div class="campo">
+                    <label for="palabras-negativas">Negativas (restan)</label>
+                    <textarea id="palabras-negativas" name="palabras_negativas" rows="8">{% for p, v in config.palabras_clave_negativas.items() %}{{ p }}: {{ v }}{{ "\n" if not loop.last }}{% endfor %}</textarea>
                 </div>
             </div>
         </div>
@@ -226,6 +279,7 @@ document.getElementById('scrape-form').addEventListener('submit', async function
 
     const formData = new FormData(e.target);
     const portales = Array.from(formData.getAll('portales'));
+    const modalidades = Array.from(formData.getAll('modalidades'));
     const mantenerViejas = formData.has('mantener_viejas');
     const notificar = formData.has('notificar');
     const umbral = parseInt(formData.get('umbral'), 10);
@@ -235,8 +289,31 @@ document.getElementById('scrape-form').addEventListener('submit', async function
         infojobs: formData.get('terminos_infojobs').split('\n').map(t => t.trim()).filter(t => t),
     };
 
+    const stackTitulo = formData.getAll('stack_titulo')
+        .concat((formData.get('stack_titulo_extra') || '').split('\n').map(t => t.trim()).filter(t => t));
+
+    function parsearPuntajes(texto) {
+        const dict = {};
+        (texto || '').split('\n').map(l => l.trim()).filter(l => l).forEach(l => {
+            const idx = l.lastIndexOf(':');
+            if (idx === -1) return;
+            const palabra = l.slice(0, idx).trim();
+            const puntos = parseInt(l.slice(idx + 1).trim(), 10);
+            if (palabra && !isNaN(puntos)) dict[palabra] = puntos;
+        });
+        return dict;
+    }
+
+    const palabrasPositivas = parsearPuntajes(formData.get('palabras_positivas'));
+    const palabrasNegativas = parsearPuntajes(formData.get('palabras_negativas'));
+
     if (portales.length === 0) {
         alert('Debes seleccionar al menos un portal.');
+        return;
+    }
+
+    if (modalidades.length === 0) {
+        alert('Debes seleccionar al menos una modalidad (remoto, híbrido o presencial).');
         return;
     }
 
@@ -249,10 +326,14 @@ document.getElementById('scrape-form').addEventListener('submit', async function
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 portales: portales,
+                modalidades: modalidades,
                 terminos: terminos,
                 mantener_viejas: mantenerViejas,
                 umbral: umbral,
                 notificar: notificar,
+                stack_titulo: stackTitulo,
+                palabras_positivas: palabrasPositivas,
+                palabras_negativas: palabrasNegativas,
             }),
         });
 

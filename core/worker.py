@@ -30,6 +30,15 @@ class EstadoScraping:
     ofertas: list[dict] = field(default_factory=list)
 
 
+def modalidades_activas(config: dict) -> list[str]:
+    """Devuelve las palabras obligatorias según las modalidades activas en la config."""
+    palabras = []
+    for modalidad in config.get("modalidades", {}).values():
+        if modalidad.get("activa", False):
+            palabras.extend(modalidad.get("palabras", []))
+    return palabras
+
+
 class ScrapingWorker:
     """
     Ejecuta el scraping en un hilo separado y mantiene el estado accesible
@@ -82,6 +91,10 @@ class ScrapingWorker:
         mantener_viejas: bool = False,
         umbral: int | None = None,
         notificar: bool = False,
+        stack_titulo: list[str] | None = None,
+        positivas: dict[str, int] | None = None,
+        negativas: dict[str, int] | None = None,
+        obligatorias: list[str] | None = None,
     ) -> bool:
         """Inicia el scraping en segundo plano si no hay uno en ejecución."""
         if self.esta_corriendo():
@@ -89,7 +102,8 @@ class ScrapingWorker:
 
         self._hilo = threading.Thread(
             target=self._ejecutar,
-            args=(config, portales, terminos, mantener_viejas, umbral, notificar),
+            args=(config, portales, terminos, mantener_viejas, umbral, notificar,
+                  stack_titulo, positivas, negativas, obligatorias),
             daemon=True,
         )
         self._hilo.start()
@@ -103,6 +117,10 @@ class ScrapingWorker:
         mantener_viejas: bool,
         umbral: int | None,
         notificar: bool,
+        stack_titulo: list[str] | None,
+        positivas: dict[str, int] | None,
+        negativas: dict[str, int] | None,
+        obligatorias: list[str] | None,
     ):
         self._actualizar_estado(
             status="running",
@@ -118,11 +136,14 @@ class ScrapingWorker:
 
         try:
             db = Database()
+            bonus_config = config.get("bonus_titulo", {})
             scorer = Scorer(
-                obligatorias=config["palabras_clave_obligatorias"],
-                positivas=config["palabras_clave_positivas"],
-                negativas=config["palabras_clave_negativas"],
+                obligatorias=obligatorias if obligatorias is not None else modalidades_activas(config),
+                positivas=positivas if positivas is not None else config["palabras_clave_positivas"],
+                negativas=negativas if negativas is not None else config["palabras_clave_negativas"],
                 umbral=umbral if umbral is not None else config["umbral_relevancia"],
+                stack_titulo=stack_titulo if stack_titulo is not None else bonus_config.get("palabras", []),
+                bonus_titulo_puntos=bonus_config.get("puntos", 3),
             )
 
             scrapers_disponibles = {
@@ -154,11 +175,16 @@ class ScrapingWorker:
                     for oferta in scraper.buscar(termino):
                         total_procesadas += 1
                         oferta = scorer.evaluar(oferta)
-                        ids_vistos_por_portal[portal].add(oferta.id_unico())
+                        id_unico = oferta.id_unico()
+                        ya_vista_en_corrida = id_unico in ids_vistos_por_portal[portal]
+                        ids_vistos_por_portal[portal].add(id_unico)
                         es_nueva = db.guardar(oferta)
 
                         if oferta.es_relevante:
-                            ofertas_relevantes_corrida.append(oferta)
+                            # Evitar duplicados cuando la misma oferta aparece
+                            # en varios términos de búsqueda de la corrida
+                            if not ya_vista_en_corrida:
+                                ofertas_relevantes_corrida.append(oferta)
                             if es_nueva:
                                 nuevas_relevantes.append(oferta)
 

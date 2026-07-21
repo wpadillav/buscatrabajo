@@ -37,6 +37,16 @@ Marca los portales que quieres consultar:
 - **Elempleo (Colombia)**: ofertas principalmente de Colombia.
 - **InfoJobs (España / remoto)**: ofertas de España, algunas con opción remoto internacional.
 
+#### Modalidades aceptadas
+
+Marca qué modalidades de trabajo te sirven:
+
+- **Remoto** (seleccionada por defecto)
+- **Híbrido**
+- **Presencial**
+
+Una oferta solo se considera si su texto (incluida la etiqueta de modalidad del portal) menciona alguna de las modalidades marcadas; por eso debe quedar al menos una seleccionada. Las palabras que identifican cada modalidad se definen en `config.yaml` (sección `modalidades`). Cumplir la modalidad suma 5 puntos base.
+
 #### Umbral de relevancia
 
 Es el puntaje mínimo que debe tener una oferta para ser considerada relevante.
@@ -56,17 +66,45 @@ Escribe un término por línea para cada portal. Ejemplos:
 
 **Elempleo:**
 ```
-remoto sistemas
-teletrabajo soporte TI
-remoto administrador servidores
+remoto soporte tecnico
+call center remoto español
+mesa de ayuda remota
 ```
 
 **InfoJobs:**
 ```
-remoto sysadmin
 teletrabajo soporte tecnico
-remoto infraestructura
+programador junior remoto
+call center remoto
 ```
+
+#### Bonus por palabras en el título
+
+Estas palabras suman puntos extra cuando aparecen en el **título** de la oferta (por defecto, +3 cada una).
+
+- **Palabras sugeridas**: marca o desmarca las casillas precargadas desde `config.yaml` (`bonus_titulo.palabras`).
+- **Otras palabras**: escribe las que quieras, una por línea, en el campo de texto.
+
+Las palabras seleccionadas y las escritas se combinan al iniciar el scraping. El puntaje del bonus se ajusta en `config.yaml` (`bonus_titulo.puntos`).
+
+#### Palabras clave y puntajes
+
+Estas palabras se buscan en **todo el texto** de la oferta (título, empresa, ubicación y descripción). Escribe una por línea con formato `palabra: puntos`:
+
+**Positivas (suman):**
+```
+soporte: 7
+devops: 9
+linux: 8
+```
+
+**Negativas (restan):**
+```
+senior: -10
+java: -3
+```
+
+Vienen precargadas desde `config.yaml` (`palabras_clave_positivas` y `palabras_clave_negativas`). Lo que edites aquí aplica solo a esa ejecución; el archivo no se modifica.
 
 ---
 

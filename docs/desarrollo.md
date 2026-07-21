@@ -95,14 +95,32 @@ busquedas:
 Edita `config.yaml`:
 
 ```yaml
+# Modalidades aceptadas y palabras que las identifican
+modalidades:
+  remoto:
+    activa: true
+    palabras: [remoto, teletrabajo, home office]
+  hibrido:
+    activa: false
+    palabras: [híbrido, hibrido, mixto]
+
 palabras_clave_positivas:
-  kubernetes: 10
-  terraform: 9
+  soporte: 8
+  programador: 8
 
 palabras_clave_negativas:
-  java: -3
-  angular: -2
+  inglés: -8
+  senior: -10
+
+# Bonus extra si la palabra aparece en el título de la oferta
+bonus_titulo:
+  puntos: 3
+  palabras:
+    - soporte
+    - junior
 ```
+
+Las modalidades, las palabras positivas, negativas y las de `bonus_titulo.palabras` también se pueden elegir por ejecución desde el panel web (`/scrape`), sin modificar el archivo. La API acepta estos valores en `POST /api/scrape/start` (ver [`api.md`](api.md)).
 
 Si necesitas lógica más compleja, edita `core/scorer.py`. Mantén el método `evaluar()` que recibe y retorna un `OfertaEmpleo`.
 

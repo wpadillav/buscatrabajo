@@ -71,15 +71,21 @@ Inicia una nueva ejecución de scraping.
 ```json
 {
   "portales": ["elempleo", "infojobs"],
+  "modalidades": ["remoto", "hibrido"],
   "terminos": {
     "elempleo": ["remoto sistemas", "teletrabajo soporte"],
-    "infojobs": ["remoto sysadmin"]
+    "infojobs": ["programador junior remoto"]
   },
   "mantener_viejas": false,
   "umbral": 8,
-  "notificar": false
+  "notificar": false,
+  "stack_titulo": ["soporte", "linux", "devops"],
+  "palabras_positivas": {"soporte": 7, "devops": 9},
+  "palabras_negativas": {"senior": -10}
 }
 ```
+
+Todos los campos son opcionales; si se omiten, se usan los valores de `config.yaml`. `modalidades` acepta los nombres definidos en la sección `modalidades` de `config.yaml` (`remoto`, `hibrido`, `presencial`); la oferta debe mencionar alguna de ellas para ser considerada. `stack_titulo` son las palabras que reciben el bonus de `bonus_titulo.puntos` cuando aparecen en el título de la oferta. `palabras_positivas` y `palabras_negativas` reemplazan los diccionarios de puntaje de `config.yaml` para esa ejecución.
 
 **Respuesta exitosa (200):**
 

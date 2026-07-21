@@ -98,10 +98,12 @@ Gestiona SQLite. Incluye:
 ### `core/scorer.py`
 
 Calcula la relevancia de cada oferta:
-- Palabras obligatorias (`remoto`, `teletrabajo`, `home office`).
-- Palabras positivas según stack (Linux, Docker, DevOps, etc.).
-- Palabras negativas (`senior`, `lead`, etc.).
+- Modalidades aceptadas (`remoto`, `hibrido`, `presencial`): la oferta debe mencionar alguna en su texto o en su etiqueta de modalidad.
+- Palabras positivas según el perfil (soporte, call center, junior, etc.).
+- Palabras negativas (`senior`, `inglés`, `cloud`, etc.).
 - Bonus por palabras clave en el título.
+
+Todos estos criterios se definen en `config.yaml`; el panel web permite sobreescribir por ejecución las modalidades, las palabras positivas, negativas y las del bonus de título (`stack_titulo`).
 
 ### `core/worker.py`
 
