@@ -7,7 +7,7 @@ Agregador de ofertas de empleo **remoto** y **freelance** con interfaz web.
 
 Por defecto está enfocado en perfiles de **soporte técnico / call center en español (sin inglés)** y **desarrollador junior**, con modalidad de trabajo seleccionable (remoto, híbrido o presencial). Todo el perfil de puntaje se puede ajustar desde el navegador o en `config.yaml`.
 
-> MVP enfocado en **Elempleo (Colombia)** e **InfoJobs**. LinkedIn y Workana quedan para una fase posterior porque requieren autenticación y tienen fuertes protecciones anti-bot.
+> MVP enfocado en **Elempleo (Colombia)** e **InfoJobs**.
 
 ---
 
